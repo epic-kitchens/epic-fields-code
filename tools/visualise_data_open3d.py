@@ -3,44 +3,19 @@ import numpy as np
 from argparse import ArgumentParser
 import json
 
+from tools.common_functions import get_c2w
+
 """ Visualize poses and point-cloud stored in json file."""
 
 def parse_args():
     parser = ArgumentParser()
     parser.add_argument('--json-data', help='path to json data', required=True)
+    parser.add_argument('--line-data', help='path to line data', default=None)
     parser.add_argument(
         '--num-display-poses', type=int, default=500, 
         help='randomly display num-display-poses to avoid creating too many poses')
     parser.add_argument('--frustum-size', type=float, default=0.1)
     return parser.parse_args()
-
-
-def qvec2rotmat(qvec):
-    return np.array([
-        [1 - 2 * qvec[2]**2 - 2 * qvec[3]**2,
-         2 * qvec[1] * qvec[2] - 2 * qvec[0] * qvec[3],
-         2 * qvec[3] * qvec[1] + 2 * qvec[0] * qvec[2]],
-        [2 * qvec[1] * qvec[2] + 2 * qvec[0] * qvec[3],
-         1 - 2 * qvec[1]**2 - 2 * qvec[3]**2,
-         2 * qvec[2] * qvec[3] - 2 * qvec[0] * qvec[1]],
-        [2 * qvec[3] * qvec[1] - 2 * qvec[0] * qvec[2],
-         2 * qvec[2] * qvec[3] + 2 * qvec[0] * qvec[1],
-         1 - 2 * qvec[1]**2 - 2 * qvec[2]**2]])
-
-
-def get_c2w(img_data: list) -> np.ndarray:
-    """
-    Args:
-        img_data: list, [qvec, tvec, frame_name] of w2c
-    
-    Returns:
-        c2w: np.ndarray, 4x4 camera-to-world matrix
-    """
-    w2c = np.eye(4)
-    w2c[:3, :3] = qvec2rotmat(img_data[:4])
-    w2c[:3, -1] = img_data[4:7]
-    c2w = np.linalg.inv(w2c)
-    return c2w
 
 
 def get_frustum(c2w: np.ndarray,
