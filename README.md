@@ -49,4 +49,4 @@ python tools/project_3d_line.py \
     --frames-root example_data/P28_101/
 ```
 
-To draw a 3D line, one option is to download the COLMAP format data and use COLMAP GUI.
+To draw a 3D line, one option is to download the COLMAP format data and use COLMAP GUI to click on points.
