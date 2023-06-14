@@ -1,5 +1,27 @@
 # EPIC-Fields 
 
+# Introduction
+
+This visualisation code is associated with the released EPIC-FIELDS dataset. Further details on the dataset and associated preprint are available at:
+[https://epic-kitchens.github.io/epic-fields](https://epic-kitchens.github.io/epic-fields)
+
+# Citation
+
+If you use this code and associated data, please cite
+
+```
+    @article{EPICFIELDS2023,
+           title={{EPIC-FIELDS}: {M}arrying {3D} {G}eometry and {V}ideo {U}nderstanding},
+           author={Tschernezki, Vadim and Darkhalil, Ahmad and Zhu, Zhifan and Fouhey, David and Larina, Iro and Larlus, Diane and Damen, Dima and Vedaldi, Andrea},
+           booktitle   = {ArXiv},
+           year      = {2023}
+    } 
+```
+
+# Credit
+
+Code prepared by Zhifan Zhu and Ahmad Darkhalil.
+
 # Format
 
 - The `camera` parameters use the COLMAP format, which is the same as the OpenCV format.
