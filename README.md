@@ -35,11 +35,20 @@ python tools/visualise_data_open3d.py --json-data example_data/P28_101.json
 ```
 PS: Press 'h' to see the Open3D help message.
 
+<details>
+    <summary>Click to see the example output</summary>
+    <img width="1011" alt="gui" src="https://github.com/epic-kitchens/epic-fields-code/assets/23008175/63bd504d-c53b-46ab-94a2-726c4dc50c75">
+</details>
+
 ## Example: Project a 3D line onto epic-kitchens images using camera poses
 
 ```python
 python tools/project_3d_line.py --json-data example_data/P28_101.json
 ```
+<details>
+    <summary>Click to see the example output</summary>
+    <img width="1011" alt="line" src="https://github.com/epic-kitchens/epic-fields-code/assets/23008175/094ac264-d723-44c6-b975-35ad5571e692">
+</details>
 
 To visualise the 3D line, use
 ```python
