@@ -58,18 +58,24 @@ if __name__ == "__main__":
     args = parse_args()
     frustum_size = args.frustum_size
 
+    vis = o3d.visualization.Visualizer()
+    vis.create_window()
     with open(args.json_data, 'r') as f:
         model = json.load(f)
+
+    """ Points """
     points = model['points']
     pcd_np = [v[:3] for v in points]
     pcd_rgb = [np.asarray(v[3:6]) / 255 for v in points]
     pcd = o3d.geometry.PointCloud()
     pcd.points = o3d.utility.Vector3dVector(pcd_np)
     pcd.colors = o3d.utility.Vector3dVector(pcd_rgb)
+    vis.add_geometry(pcd, reset_bounding_box=True)
 
+    """ Camear Poses """
     camera = model['camera']
     cam_h, cam_w = camera['height'], camera['width']
-    c2w_list = [get_c2w(img) for img in model['images']]
+    c2w_list = [get_c2w(img) for img in model['images'].values()]
     c2w_sel_inds = np.random.choice(
         len(c2w_list), min(len(c2w_list), args.num_display_poses), replace=False)
     c2w_sel = [c2w_list[i] for i in c2w_sel_inds]
@@ -77,12 +83,22 @@ if __name__ == "__main__":
         get_frustum(c2w, sz=frustum_size, camera_height=cam_h, camera_width=cam_w) 
         for c2w in c2w_sel
     ]
-
-    vis = o3d.visualization.Visualizer()
-    vis.create_window()
-    vis.add_geometry(pcd, reset_bounding_box=True)
     for frustum in frustums:
         vis.add_geometry(frustum, reset_bounding_box=True)
+    
+    """ Optional: Line """
+    if args.line_data is not None:
+        line_set = o3d.geometry.LineSet()
+        with open(args.line_data, 'r') as f:
+            line_points = np.asarray(json.load(f)).reshape(2, 3)
+        vc = line_points.mean(axis=0)
+        dir = line_points[1] - line_points[0]
+        lst = vc + 2 * dir
+        led = vc - 2 * dir
+        lines = [lst, led]
+        line_set.points = o3d.utility.Vector3dVector(lines)
+        line_set.lines = o3d.utility.Vector2iVector([[0, 1]])
+        vis.add_geometry(line_set, reset_bounding_box=True)
 
     control = vis.get_view_control()
     control.set_front([1, 1, 1])

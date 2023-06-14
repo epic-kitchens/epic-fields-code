@@ -1,4 +1,5 @@
 from typing import List, Dict
+import argparse
 import json
 import os
 import re
@@ -210,19 +211,21 @@ class LineProjector:
 
 
 if __name__ == '__main__':
-    json_data = './example_data/P28_101.json'
-    line_data = './example_data/P28_101_line.json'
-    frames_root = './example_data/P28_101'
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--json-data', type=str, required=True)
+    parser.add_argument('--line-data', type=str, required=True)
+    parser.add_argument('--frames-root', type=str, required=True)
+    args = parser.parse_args()
 
-    with open(json_data) as f:
+    with open(args.json_data) as f:
         model = json.load(f)
         camera = model['camera']
         images = model['images']
 
-    with open(line_data) as f:
+    with open(args.line_data) as f:
         line = json.load(f)
         line = np.asarray(line).reshape(2, 3)
         line = Line(line)
 
     runner = LineProjector(camera, images, line)
-    runner.write_mp4(frames_root=frames_root)
+    runner.write_mp4(frames_root=args.frames_root)

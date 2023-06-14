@@ -19,7 +19,7 @@ def qvec2rotmat(qvec):
 def get_c2w(img_data: list) -> np.ndarray:
     """
     Args:
-        img_data: list, [qvec, tvec, frame_name] of w2c
+        img_data: list, [qvec, tvec] of w2c
     
     Returns:
         c2w: np.ndarray, 4x4 camera-to-world matrix

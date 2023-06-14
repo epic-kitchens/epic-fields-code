@@ -21,6 +21,8 @@
         ...
     ]
 }
+
+example data can be found in `example_data/P28_101.json`
 ```
 
 # Visualisation
@@ -34,6 +36,17 @@ python tools/visualise_data_open3d.py --json-data example_data/P28_101.json
 PS: Press 'h' to see the Open3D help message.
 
 ## Example: Project a 3D line onto epic-kitchens images using camera poses
-Assume `epic_rgb_root` stores the epic-kitchens rgb images, e.g. `epic_rgb_root/P02/P02_04/frame_{1:010d}.jpg`
+
 ```python
+python tools/project_3d_line.py --json-data example_data/P28_101.json
 ```
+
+To visualise the 3D line, use
+```python
+python tools/project_3d_line.py \
+    --json-data example_data/P28_101.json \
+    --line-data example_data/P28_101_line.json \
+    --frames-root example_data/P28_101/
+```
+
+To draw a 3D line, one option is to download the COLMAP format data and use COLMAP GUI.
