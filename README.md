@@ -6,17 +6,17 @@
 - The `images` stores the world-to-camera transformation, represented by quaternion and translation. 
     - Note: for NeRF usage this needs to be converted to camera-to-world transformation and possibly changing (+x, +y, +z) to (+x, -y, -z)
 - The `points` is part of COLMAP output. It's kept here for visualisation purpose and potentially for computing the `near`/`far` bounds in NeRF input.
-```json
+```
 {
-    'camera': {
-        'id': 1, 'model': 'OPENCV', 'width': 456, 'height': 256,
-        'params': [fx, fy, cx, cy, k1, k2, p1, p2]
+    "camera": {
+        "id": 1, "model": "OPENCV", "width": 456, "height": 256,
+        "params": [fx, fy, cx, cy, k1, k2, p1, p2]
     },
-    'images': {
+    "images": {
         frame_name: [qw, qx, qy, qz, tx, ty, tz],
         ...
     },
-    'points': [
+    "points": [
         [x, y, z, r, g, b],
         ...
     ]
