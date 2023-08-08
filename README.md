@@ -1,6 +1,6 @@
 # EPIC Fields: Marrying 3D Geometry and Video Understanding 
-![EPIC Fields Overview](assets/epic_fields.png?raw=true)
 [![Paper](https://img.shields.io/badge/arXiv-Paper-red.svg)](https://arxiv.org/abs/2306.08731)
+![EPIC Fields Overview](assets/epic_fields.png?raw=true)
 
 This repository provides tools and scripts for visualizing and reconstructing the [EPIC FIELDS](https://epic-kitchens.github.io/epic-fields) dataset.
 
