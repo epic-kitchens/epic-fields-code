@@ -1,5 +1,4 @@
 # EPIC Fields: Marrying 3D Geometry and Video Understanding 
-[![Paper](https://img.shields.io/badge/arXiv-Paper-red.svg)](https://arxiv.org/abs/2306.08731)
 ![EPIC Fields Overview](assets/epic_fields.png?raw=true)
 
 This repository provides tools and scripts for visualizing and reconstructing the [EPIC FIELDS](https://epic-kitchens.github.io/epic-fields) dataset.
@@ -10,15 +9,14 @@ This repository provides tools and scripts for visualizing and reconstructing th
    - [Introduction](#introduction)
    - [Format](#format)
    - [Visualization](#visualisation)
-   - [Credit](#credit)
 2. [Reconstruction Pipeline](#reconstruction-pipeline)
    - [Steps for EPIC-KITCHENS Reconstruction](#steps-for-epic-kitchens-reconstruction)
    - [Understanding the Output File Structure](#understanding-the-output-file-structure)
-   - [Code Credit](#code-credit)
+3. [Additional info](#additional-info)
+   - [Credit](#credit)
    - [Citation](#citation)
    - [License](#license)
-   - [Contact](#Contact)
-
+   - [Contact](#contact)
 
 
  
@@ -89,12 +87,9 @@ python tools/project_3d_line.py \
 
 To draw a 3D line, one option is to download the COLMAP format data and use COLMAP GUI to click on points.
 
-## Credit
-
-Code prepared by Zhifan Zhu and Ahmad Darkhalil.
-
 
 ---
+
 
 
 # Reconstruction Pipeline
@@ -287,7 +282,7 @@ For this step, you'll use the `register_dense.py` script. This script registers 
 - `--summary_path`: Directory where the summary files of the dense registration will be stored. Default: `logs/dense/out_summary`
 - `--gpu_index`: Index of the GPU to use. Default: `0`
 
-### Demo: Registering Frames into Sparse Model for Video `P15_12`
+#### Demo: Registering Frames into Sparse Model for Video `P15_12`
 
 To demonstrate the registration process using the `register_dense.py` script, let's use the sample video `P15_12` as an example.
 
@@ -299,9 +294,11 @@ Assuming input_videos.txt contains the entry for P15_12, the above command will 
 
 After executing the command, you can check the log files and summary for insights and statistics on the registration process for the P15_12 video.
 
-## Code Credit
+# Additional info
 
-Code prepared by Ahmad Darkhalil, Vadim Tschernezki and Zhifan Zhu.
+## Credit
+
+Code prepared by Zhifan Zhu, Ahmad Darkhalil and Vadim Tschernezki.
 
 ## Citation
 If you find this work useful please cite our paper:
