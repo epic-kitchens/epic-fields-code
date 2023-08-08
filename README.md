@@ -312,11 +312,9 @@ If you find this work useful please cite our paper:
     } 
 ```
 
-
-```
-
 Also cite the [EPIC-KITCHENS-100](https://epic-kitchens.github.io) paper where the videos originate:
 
+```
 @ARTICLE{Damen2022RESCALING,
            title={Rescaling Egocentric Vision: Collection, Pipeline and Challenges for EPIC-KITCHENS-100},
            author={Damen, Dima and Doughty, Hazel and Farinella, Giovanni Maria  and and Furnari, Antonino 
