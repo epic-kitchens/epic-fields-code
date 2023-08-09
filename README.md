@@ -113,8 +113,8 @@ You can download and install COLMAP from their official website. For detailed in
 To proceed with the subsequent steps, you'll need to clone the current repository. Run the following commands:
 
 ```bash
-git https://github.com/epic-kitchens/epic-fields-code.git
-cd eepic-fields-code
+git clone https://github.com/epic-kitchens/epic-fields-code.git
+cd epic-fields-code
 ```
 
 #### 3. Downloading Vocabulary Trees
