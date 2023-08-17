@@ -15,7 +15,7 @@ from tools.common_functions import qvec2rotmat
 
 class Line:
     """ An infinite 3D line to denote Annotated Line """
-    
+
     def __init__(self, line_ends: np.ndarray):
         """
         Args:
@@ -27,11 +27,11 @@ class Line:
         self.dir = ed - st
         self.v0 = st
         self.v1 = ed
-    
+
     def __repr__(self) -> str:
         return f'vc: {str(self.vc)} \ndir: {str(self.dir)}'
-    
-    def check_single_point(self, 
+
+    def check_single_point(self,
                            point: np.ndarray,
                            radius: float) -> bool:
         """
@@ -46,14 +46,14 @@ class Line:
         d = area2 / base_len
         return True if d < radius else False
 
-    def check_points(self, 
+    def check_points(self,
                      points: np.ndarray,
                      diameter: float) -> np.ndarray:
         """
         Args:
             points: (N, 3) array of points
             diameter: threshold for checking inside
-        
+
         Returns:
             (N,) bool array
         """
@@ -155,7 +155,7 @@ class LineProjector:
         """
         Args:
             camera: dict, camera info
-            images: dict of 
+            images: dict of
                 frame_name: [qw, qx, qy, qz, tx, ty, tz] in **w2c**
         """
         self.camera = camera
@@ -165,12 +165,12 @@ class LineProjector:
 
     def project_frame(self, frame_name: str, frames_root: str) -> np.ndarray:
         """ Project a line onto a frame
-        
+
         Args:
             frame_idx: int. epic frame index
-            frames_root: str. 
+            frames_root: str.
                 f'{frame_root}/frame_{frame_idx:010d}.jpg' is the path to the epic-kitchens frame
-        
+
         Returns:
             img: (H, W, 3) np.uint8
         """
@@ -181,33 +181,42 @@ class LineProjector:
         if line_2d is None:
             return img
         img = cv2.line(
-            img, np.int32(line_2d[0]), np.int32(line_2d[1]), 
+            img, np.int32(line_2d[0]), np.int32(line_2d[1]),
             color=self.line_color, thickness=2, lineType=cv2.LINE_AA)
-        
+
         return img
-    
-    def write_mp4(self, frames_root: str, fps=5, out_dir='./outputs'):
+
+    def write_mp4(self,
+                  frames_root: str,
+                  fps=5,
+                  out_name='line_output'):
         """ Write mp4 file that has line projected on the image frames
 
         Args:
             frames_root: str.
                 f'{frame_root}/frame_{frame_idx:010d}.jpg' is the path to the epic-kitchens frame
         """
+        out_dir = os.path.join('./outputs/', out_name)
         os.makedirs(out_dir, exist_ok=True)
         fmt = os.path.join(out_dir, '{}')
 
-        frame_names = sorted(os.listdir(frames_root))
+        frames_on_disk = set(os.listdir(frames_root))
+        frame_names = set(self.images.keys())
+        if len(frames_on_disk) < len(frame_names):
+            print(f"Showing {len(frames_on_disk)} / {len(frame_names)} frames")
+            frame_names = frame_names.intersection(frames_on_disk)
+        frame_names = sorted(list(frame_names))
         for frame_name in tqdm.tqdm(frame_names):
             img = self.project_frame(frame_name, frames_root)
             frame_number = re.search('\d{10,}', frame_name)[0]
-            cv2.putText(img, frame_number, 
+            cv2.putText(img, frame_number,
                         (self.camera['width']//4, self.camera['height'] * 31 // 32),
                         cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 2, cv2.LINE_AA)
             Image.fromarray(img).save(fmt.format(frame_name))
 
         from moviepy import editor
         clip = editor.ImageSequenceClip(sequence=out_dir, fps=fps)
-        clip.write_videofile('line_output.mp4')
+        clip.write_videofile(f'./outputs/{out_name}-fps{fps}.mp4')
 
 
 if __name__ == '__main__':
@@ -215,6 +224,8 @@ if __name__ == '__main__':
     parser.add_argument('--json-data', type=str, required=True)
     parser.add_argument('--line-data', type=str, required=True)
     parser.add_argument('--frames-root', type=str, required=True)
+    parser.add_argument('--out-name', type=str, default="line_output")
+    parser.add_argument('--fps', type=int, default=5)
     args = parser.parse_args()
 
     with open(args.json_data) as f:
@@ -228,4 +239,5 @@ if __name__ == '__main__':
         line = Line(line)
 
     runner = LineProjector(camera, images, line)
-    runner.write_mp4(frames_root=args.frames_root)
+    runner.write_mp4(
+        frames_root=args.frames_root, fps=args.fps, out_name=args.out_name)

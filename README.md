@@ -70,20 +70,15 @@ PS: Press 'h' to see the Open3D help message.
 ### Example: Project a 3D line onto epic-kitchens images using camera poses
 
 ```python
-python tools/project_3d_line.py --json-data example_data/P28_101.json
-```
-<details>
-    <summary>Click to see the example output</summary>
-    <img width="1011" alt="line" src="./example_data/example_output_line.jpg">
-</details>
-
-To visualise the 3D line, use
-```python
 python tools/project_3d_line.py \
     --json-data example_data/P28_101.json \
     --line-data example_data/P28_101_line.json \
     --frames-root example_data/P28_101/
 ```
+<details>
+    <summary>Click to see the example output</summary>
+    <img width="1011" alt="line" src="./example_data/example_output_line.jpg">
+</details>
 
 To draw a 3D line, one option is to download the COLMAP format data and use COLMAP GUI to click on points.
 
