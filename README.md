@@ -12,7 +12,8 @@ This repository provides tools and scripts for visualizing and reconstructing th
 2. [Reconstruction Pipeline](#reconstruction-pipeline)
    - [Steps for EPIC-KITCHENS Reconstruction](#steps-for-epic-kitchens-reconstruction)
    - [Understanding the Output File Structure](#understanding-the-output-file-structure)
-3. [Additional info](#additional-info)
+3. [Reconstruction Pipeline: Quick Demo](#reconstruction-pipeline-quick-demo)
+4. [Additional info](#additional-info)
    - [Credit](#credit)
    - [Citation](#citation)
    - [License](#license)
@@ -288,6 +289,81 @@ python3 register_dense.py --input_videos input_videos.txt --sparse_reconstuction
 Assuming input_videos.txt contains the entry for P15_12, the above command will register all frames from the P15_12 video with the sparse model stored under colmap_models/sparse, the new registered model will be saved under colmap_models/dense. The logs and summary for this registration process will be saved under the logs/dense/out_logs_terminal and logs/dense/out_summary directories, respectively.
 
 After executing the command, you can check the log files and summary for insights and statistics on the registration process for the P15_12 video.
+
+# Reconstruction Pipeline: Quick Demo
+
+Here we provide another demo script `demo/demo.py`
+that works on a video directly, summarising all above steps into one file.
+
+Assume the environment is setup as described in [Step 0](#step-0-prerequisites-and-initial-configuration),
+and the video file is named `video.mp4`.
+Run the demo with:
+
+```
+python demo/demo.py video.mp4
+```
+
+You will find the results in `outputs/demo/colmap/`:
+the file `outputs/demo/colmap/registered/images.bin` stores (nearly) all camera poses;
+the file `outputs/demo/colmap/dense/fused.ply` stores the dense point cloud of the scene.
+There are also log files `outputs/demo/*.log` to monitor the progress.
+
+You should now inspect(visualise) the results using:
+```
+python3 tools/visualize_colmap_open3d.py \
+    --model outputs/demo/colmap/registered \
+    --pcd-path outputs/demo/colmap/dense/fused.ply
+```
+Note the `outputs/demo/colmap/registered/images.bin` might be slow to load. In practice, we visualise the key-frames:
+```
+python3 tools/visualize_colmap_open3d.py  \
+    --model outputs/demo/colmap/sparse/0 \  
+    --pcd-path outputs/demo/colmap/dense/fused.ply
+# Note: See colmap doc for what `sparse/0` exactly means.
+```
+
+### What does this `demo/demo.py` do?
+
+Specifically, `demo/demo.py` file will do the following sequentially:
+- Extract frames using `ffmpeg` with longside 512px. This is analogous to Step 1 & 2 in [Reconstruction Pipeline](#reconstruction-pipeline).
+- Compute important frames via homography. This correspond to Step 3 above.
+- Perform the _sparse reconstruction_. This corresponds to Step 4 above.
+    - at the end of this step, you should inspect the sparse result to make sure it makes sense.
+- Perform the _dense frame registration_. This corresponds to Step 5 above.
+    - at the end of this, you will have all the camera poses.
+- Compute dense point cloud using colmap's patch_match_stereo. This gives you the dense pretty point-cloud you see in the teaser image.
+
+### Example: Ego4D videos
+
+We demo this script on following two Ego4D videos:
+- Task: Cooking — 10 minutes. Ego4d uid = `id18f5c2be-cb79-46fa-8ff1-e03b7e26c986`. Demo output on Youtube: https://youtu.be/GfBsLnZoFGs
+- Task: Construction — 35 minutes of decorating and refurbishment. Ego4d uid =`a2dd8a8f-835f-4068-be78-99d38ad99625`. Demo output on Youtube: https://youtu.be/EZlayZIwNgQ
+
+The computing time of the second video (Task Construction) breaks down as follows:
+- Extract frames: 5 mins
+- Homography filter: 1 hour
+- Sparse reconstruction: **20 hours**
+- Dense register: 1.5 hours
+- Dense Point-cloud generation: 2 hours
+
+### Tips for running the demo script
+
+We rely on COLMAP, but no tool is perfect. In case of failure, check:
+- If the resulting point cloud is not geometrically correct, e.g. the ground is clearly not flat, try to re-run from the sparse reconstruction step.
+COLMAP has some stochastic behaviur at initial view choosing.
+- If above fails again, try to increase the `--overlap` to e.g. 0.95. This will the number of important frames, at the cost of increasing running time during sparse reconstruction.
+
+## Requirements
+
+Do the step 0 (link needed)
+    colmap installed
+    ffmpeg
+    pycolmap
+    vocab tree
+
+## TODO: what about visualisation?
+
+## Restart/Continue reconstruction pipeline 
 
 # Additional info
 
