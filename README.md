@@ -351,7 +351,7 @@ The computing time of the second video (Task Construction) breaks down as follow
 We rely on COLMAP, but no tool is perfect. In case of failure, check:
 - If the resulting point cloud is not geometrically correct, e.g. the ground is clearly not flat, try to re-run from the sparse reconstruction step.
 COLMAP has some stochastic behaviur at initial view choosing.
-- If above fails again, try to increase the `--overlap` to e.g. 0.95. This will the number of important frames, at the cost of increasing running time during sparse reconstruction.
+- If above fails again, try to increase the `--overlap` in homography filter to e.g. 0.95. This will the number of important frames, at the cost of increasing running time during sparse reconstruction.
 
 
 # Additional info
