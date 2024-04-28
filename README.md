@@ -353,17 +353,6 @@ We rely on COLMAP, but no tool is perfect. In case of failure, check:
 COLMAP has some stochastic behaviur at initial view choosing.
 - If above fails again, try to increase the `--overlap` to e.g. 0.95. This will the number of important frames, at the cost of increasing running time during sparse reconstruction.
 
-## Requirements
-
-Do the step 0 (link needed)
-    colmap installed
-    ffmpeg
-    pycolmap
-    vocab tree
-
-## TODO: what about visualisation?
-
-## Restart/Continue reconstruction pipeline 
 
 # Additional info
 
