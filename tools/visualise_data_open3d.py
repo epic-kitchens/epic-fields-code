@@ -76,8 +76,7 @@ if __name__ == "__main__":
     camera = model['camera']
     cam_h, cam_w = camera['height'], camera['width']
     c2w_list = [get_c2w(img) for img in model['images'].values()]
-    c2w_sel_inds = np.random.choice(
-        len(c2w_list), min(len(c2w_list), args.num_display_poses), replace=False)
+    c2w_sel_inds = np.linspace(0, len(c2w_list)-1, args.num_display_poses).astype(int)
     c2w_sel = [c2w_list[i] for i in c2w_sel_inds]
     frustums = [
         get_frustum(c2w, sz=frustum_size, camera_height=cam_h, camera_width=cam_w) 
