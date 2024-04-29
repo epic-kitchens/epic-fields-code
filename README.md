@@ -310,6 +310,7 @@ There are also log files `outputs/demo/*.log` to monitor the progress.
 
 You should now inspect(visualise) the results using:
 ```
+# Tested with open3d==0.16.0
 python3 tools/visualize_colmap_open3d.py \
     --model outputs/demo/colmap/registered \
     --pcd-path outputs/demo/colmap/dense/fused.ply
