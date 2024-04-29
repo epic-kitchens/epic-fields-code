@@ -26,7 +26,6 @@ colmap patch_match_stereo    \
 --PatchMatchStereo.gpu_index=0,1     \
 --PatchMatchStereo.cache_size=32 \
 --PatchMatchStereo.geom_consistency false \
-# --PatchMatchStereo.filter true \
 
 colmap stereo_fusion   \
   --workspace_path .   \
@@ -34,5 +33,21 @@ colmap stereo_fusion   \
   --input_type photometric   \
   --output_type PLY \
   --output_path ./fused.ply \
+
+# For geometric consistency, do the following lines instead
+# colmap patch_match_stereo    \
+# --workspace_path .    \
+# --workspace_format COLMAP    \
+# --PatchMatchStereo.max_image_size=1000     \
+# --PatchMatchStereo.gpu_index=0,1     \
+# --PatchMatchStereo.cache_size=32 \
+# --PatchMatchStereo.geom_consistency false \
+
+# colmap stereo_fusion   \
+#   --workspace_path .   \
+#   --workspace_format COLMAP   \
+#   --input_type photometric   \
+#   --output_type PLY \
+#   --output_path ./fused.ply \
 
 cd $OLD_DIR

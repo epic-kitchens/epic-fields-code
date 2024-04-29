@@ -338,14 +338,15 @@ Specifically, `demo/demo.py` file will do the following sequentially:
 
 We demo this script on following two Ego4D videos:
 - Task: Cooking — 10 minutes. Ego4d uid = `id18f5c2be-cb79-46fa-8ff1-e03b7e26c986`. Demo output on Youtube: https://youtu.be/GfBsLnZoFGs
+    - The running time of this video is 4 hours.
+    - As a sanity check, the file `homo90.txt` after the homography step contains *1522* frames.
 - Task: Construction — 35 minutes of decorating and refurbishment. Ego4d uid =`a2dd8a8f-835f-4068-be78-99d38ad99625`. Demo output on Youtube: https://youtu.be/EZlayZIwNgQ
-
-The computing time of the second video (Task Construction) breaks down as follows:
-- Extract frames: 5 mins
-- Homography filter: 1 hour
-- Sparse reconstruction: **20 hours**
-- Dense register: 1.5 hours
-- Dense Point-cloud generation: 2 hours
+    - The running time of this video breaks down as follows:
+        - Extract frames: 5 mins
+        - Homography filter: 1 hour
+        - Sparse reconstruction: **20 hours**
+        - Dense register: 1.5 hours
+        - Dense Point-cloud generation: 2 hours
 
 ### Tips for running the demo script
 
@@ -353,6 +354,32 @@ We rely on COLMAP, but no tool is perfect. In case of failure, check:
 - If the resulting point cloud is not geometrically correct, e.g. the ground is clearly not flat, try to re-run from the sparse reconstruction step.
 COLMAP has some stochastic behaviur at initial view choosing.
 - If above fails again, try to increase the `--overlap` in homography filter to e.g. 0.95. This will the number of important frames, at the cost of increasing running time during sparse reconstruction.
+
+
+### Visualise a video of camera poses
+
+To produce a video of camera poses and trajectory overtime (see e.g. Youtube video above), follow steps below:
+<details>
+    <summary>Click to see steps</summary>
+    <ol>
+    <li> Visualise the result again with Open3D GUI<br>
+    <code>
+        python3 tools/visualize_colmap_open3d.py 
+    --model outputs/demo/colmap/sparse/0 
+    --pcd-path outputs/demo/colmap/dense/fused.ply
+    </code>
+    </li>
+    <li>
+    In Open3D GUI, press <code>Ctrl-C</code>(Linux) / <code>Cmd-C</code> (Mac) to copy the view to system clipboard. Go to any editor, press <code>Ctrl-V/Cmd-V</code> to paste the view status, save the file to <code>outputs/demo/view.json</code>.
+    </li>
+    <li> Run the following script to produce the video<br>
+    <code>
+    python utils/hovering/hover_open3d.py --model outputs/demo/colmap/registered --pcd-path outputs/demo/colmap/dense/fused.ply  --view-path outputs/demo/view.json
+    </code><br>
+    The produced video is at <code>outputs/hovering/out.mp4</code>.
+    </li>
+    </ol>
+</details>
 
 
 # Additional info
