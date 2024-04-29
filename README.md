@@ -362,21 +362,12 @@ To produce a video of camera poses and trajectory overtime (see e.g. Youtube vid
 <details>
     <summary>Click to see steps</summary>
     <ol>
-    <li> Visualise the result again with Open3D GUI<br>
-    <code>
-        python3 tools/visualize_colmap_open3d.py 
-    --model outputs/demo/colmap/sparse/0 
-    --pcd-path outputs/demo/colmap/dense/fused.ply
-    </code>
+    <li> Visualise the result again with Open3D GUI<br><code>python3 tools/visualize_colmap_open3d.py --model outputs/demo/colmap/sparse/0 --pcd-path outputs/demo/colmap/dense/fused.ply</code>
     </li>
     <li>
     In Open3D GUI, press <code>Ctrl-C</code>(Linux) / <code>Cmd-C</code> (Mac) to copy the view to system clipboard. Go to any editor, press <code>Ctrl-V/Cmd-V</code> to paste the view status, save the file to <code>outputs/demo/view.json</code>.
     </li>
-    <li> Run the following script to produce the video<br>
-    <code>
-    python utils/hovering/hover_open3d.py --model outputs/demo/colmap/registered --pcd-path outputs/demo/colmap/dense/fused.ply  --view-path outputs/demo/view.json
-    </code><br>
-    The produced video is at <code>outputs/hovering/out.mp4</code>.
+    <li> Run the following script to produce the video<br><code>python utils/hovering/hover_open3d.py --model outputs/demo/colmap/registered --pcd-path outputs/demo/colmap/dense/fused.ply  --view-path outputs/demo/view.json</code><br>The produced video is at <code>outputs/hovering/out.mp4</code>.
     </li>
     </ol>
 </details>
