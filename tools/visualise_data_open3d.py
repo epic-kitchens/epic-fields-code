@@ -3,7 +3,9 @@ import numpy as np
 from argparse import ArgumentParser
 import json
 
-from tools.common_functions import get_c2w
+from tools.common_functions import get_c2w, get_frustum
+# from utils.geometry import bounding_sphere, find_gravity1, auto_viewcontrol1
+from utils.geometry import auto_viewcontrol1
 
 """ Visualize poses and point-cloud stored in json file."""
 
@@ -11,6 +13,12 @@ def parse_args():
     parser = ArgumentParser()
     parser.add_argument('--json-data', help='path to json data', required=True)
     parser.add_argument('--line-data', help='path to line data', default=None)
+
+    parser.add_argument('--show-bounding-sphere', action='store_true', default=False,
+                        help='show bounding sphere of the camera poses')
+    parser.add_argument('--show-mesh-frame', default=False)
+    parser.add_argument('--show-gravity', action='store_true', default=False,
+                        help='show gravity vector in the scene')
     parser.add_argument(
         '--num-display-poses', type=int, default=500, 
         help='randomly display num-display-poses to avoid creating too many poses')
@@ -18,43 +26,7 @@ def parse_args():
     return parser.parse_args()
 
 
-def get_frustum(c2w: np.ndarray,
-                sz=0.2, 
-                camera_height=None,
-                camera_width=None,
-                frustum_color=[1, 0, 0]) -> o3d.geometry.LineSet:
-    """
-    Args:
-        c2w: np.ndarray, 4x4 camera-to-world matrix
-        sz: float, size (width) of the frustum
-    Returns:
-        frustum: o3d.geometry.TriangleMesh
-    """
-    cen = [0, 0, 0]
-    wid = sz
-    if camera_height is not None and camera_width is not None:
-        hei = wid * camera_height / camera_width
-    else:
-        hei = wid
-    tl = [wid, hei, sz]
-    tr = [-wid, hei, sz]
-    br = [-wid, -hei, sz]
-    bl = [wid, -hei, sz]
-    points = np.float32([cen, tl, tr, br, bl])
-    lines = [
-        [0, 1], [0, 2], [0, 3], [0, 4],
-        [1, 2], [2, 3], [3, 4], [4, 1],]
-    frustum = o3d.geometry.LineSet()
-    frustum.points = o3d.utility.Vector3dVector(points)
-    frustum.lines = o3d.utility.Vector2iVector(lines)
-    frustum.colors = o3d.utility.Vector3dVector([np.asarray([1, 0, 0])])
-    frustum.paint_uniform_color(frustum_color)
-
-    frustum = frustum.transform(c2w)
-    return frustum
-
-
-if __name__ == "__main__":
+def main():
     args = parse_args()
     frustum_size = args.frustum_size
 
@@ -72,11 +44,17 @@ if __name__ == "__main__":
     pcd.colors = o3d.utility.Vector3dVector(pcd_rgb)
     vis.add_geometry(pcd, reset_bounding_box=True)
 
-    """ Camear Poses """
+    """ mesh frame """
+    if args.show_mesh_frame:
+        mesh_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(size=10, origin=[0, 0, 0])
+        vis.add_geometry(mesh_frame, reset_bounding_box=True)
+
+    """ Camera Poses """
     camera = model['camera']
     cam_h, cam_w = camera['height'], camera['width']
     c2w_list = [get_c2w(img) for img in model['images'].values()]
-    c2w_sel_inds = np.linspace(0, len(c2w_list)-1, args.num_display_poses).astype(int)
+    c2w_sel_inds = np.random.choice(
+        len(c2w_list), min(len(c2w_list), args.num_display_poses), replace=False)
     c2w_sel = [c2w_list[i] for i in c2w_sel_inds]
     frustums = [
         get_frustum(c2w, sz=frustum_size, camera_height=cam_h, camera_width=cam_w) 
@@ -85,6 +63,53 @@ if __name__ == "__main__":
     for frustum in frustums:
         vis.add_geometry(frustum, reset_bounding_box=True)
     
+
+    """ auto view control """
+    c2ws = np.asarray(c2w_list)
+    viewcontrol = auto_viewcontrol1(c2ws, gravity=None, elevate_ang=30.)
+
+    """ Gravity """
+    if args.show_gravity:
+        g_world = viewcontrol['gravity']
+        gravity_arrow = o3d.geometry.TriangleMesh.create_arrow(
+            cylinder_radius=0.1,
+            cone_radius=0.2,
+            cylinder_height=2.0,
+            cone_height=0.5, 
+            resolution=20,
+            cylinder_split=4,
+            cone_split=1,
+        )
+        gravity_arrow.paint_uniform_color([1.0, 0.0, 1.0])  # purple color
+        z_axis = np.array([0.0, 0.0, 1.0])
+        if np.allclose(z_axis, -g_world):           # 180-deg flip: pick X as rotation axis
+            R = o3d.geometry.get_rotation_matrix_from_axis_angle(np.pi * np.array([1.0, 0.0, 0.0]))
+            print("180-deg flip detected, using X-axis for rotation")
+        else:
+            axis = np.cross(z_axis, g_world)
+            axis /= np.linalg.norm(axis)
+            angle = np.arccos(np.clip(np.dot(z_axis, g_world), -1.0, 1.0))
+            R = o3d.geometry.get_rotation_matrix_from_axis_angle(angle * axis)
+        center = viewcontrol['center']
+        print(f"Gravity vector: {g_world}, Center of cameras: {center}")
+        gravity_arrow.translate(center)
+        gravity_arrow.rotate(R, center=center)
+        vis.add_geometry(gravity_arrow, reset_bounding_box=True)
+
+    """ Bounding Sphere of Cameras """
+    if args.show_bounding_sphere:
+        center = viewcontrol['center']
+        radius = viewcontrol['radius']
+        sphere = o3d.geometry.TriangleMesh.create_sphere(radius)
+        print(f"{viewcontrol=}")
+        print("Bounding sphere center and radius:")
+        print(center, radius)
+        sphere.paint_uniform_color([0.5, 0.5, 0.5])  # gray color
+        sphere = sphere.translate(center)  # move to the center of the bounding sphere
+        sphere.compute_vertex_normals() 
+        vis.add_geometry(sphere, reset_bounding_box=True)
+
+
     """ Optional: Line """
     if args.line_data is not None:
         line_set = o3d.geometry.LineSet()
@@ -99,11 +124,18 @@ if __name__ == "__main__":
         line_set.lines = o3d.utility.Vector2iVector([[0, 1]])
         vis.add_geometry(line_set, reset_bounding_box=True)
 
+    render_option = vis.get_render_option()
+    render_option.point_size = 0.1  # Adjust this value to change point size
+
     control = vis.get_view_control()
-    control.set_front([1, 1, 1])
-    control.set_lookat([0, 0, 0])
-    control.set_up([0, 0, 1])
-    control.set_zoom(1)
+    control.set_front(-viewcontrol['front'])  # [1, 1, 1]
+    control.set_lookat(viewcontrol['lookat'])  # [0, 0, 0]
+    control.set_up(viewcontrol['up'])  # [0, 0, 1]
+    control.set_zoom(0.1)
 
     vis.run()
     vis.destroy_window()
+
+
+if __name__ == "__main__":
+    main()
