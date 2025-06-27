@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def find_gravity1(R_c2ws: np.ndarray) -> np.ndarray:
+def find_gravity1(c2ws: np.ndarray) -> np.ndarray:
     """ Approximate the gravity direction by minimisation.
     "Least swept vector" between two camera poses.
     
@@ -11,6 +11,7 @@ def find_gravity1(R_c2ws: np.ndarray) -> np.ndarray:
     Returns:
         gravity: np.ndarray, shape (3,), the estimated gravity direction.
     """
+    R_c2ws = c2ws[:, :3, :3]
     if len(R_c2ws) < 2:
         raise ValueError("Need at least two poses")
 
@@ -31,6 +32,99 @@ def find_gravity1(R_c2ws: np.ndarray) -> np.ndarray:
         g_world = -g_world
 
     return g_world
+
+
+def find_gravity2(c2ws: np.ndarray) -> np.ndarray:
+    """ Find the gravity direction from minimal location variance direction.
+
+    Args:
+        c2ws: np.ndarray, shape (N, 4, 4), where N is the number of camera poses.
+    
+    Returns:
+        gravity: np.ndarray, shape (3,), the estimated gravity direction.
+    """
+    if c2ws.ndim != 3 or c2ws.shape[1] != 4 or c2ws.shape[2] != 4:
+        raise ValueError("Input c2ws must be of shape (N, 4, 4)")
+
+    # Extract translation vectors (camera positions)
+    P = c2ws[:, :3, 3]
+    C = np.mean(P, axis=0)  # Center of camera positions
+    Q = P - C  # Center the positions
+
+    _, _, vh = np.linalg.svd(Q, full_matrices=False)
+    n = vh[-1]                       # last right-singular vector → normal
+    n_hat = n / np.linalg.norm(n)    # unit normal
+
+    gravity = n_hat  # This is the estimated gravity direction
+    # pick the sign that has positive inner product with cameras' Y-axis
+    y_world = c2ws[0, :3, 1]  # column-1 is camera Y in world frame
+    if np.dot(gravity, y_world) < 0:
+        gravity = -gravity
+
+    return gravity
+
+# RANSAC doesn't seem to work well
+# def find_gravity2_ransac(c2ws: np.ndarray, 
+#                          n_iter: int = 100, 
+#                          threshold: float = 0.1) -> np.ndarray:
+#     """ Use RANSAC to deal with outliers when the person occasionally bends down.
+#     """
+#     N = c2ws.shape[0]
+#     # A plane is defined by 3 points, so we need at least that many.
+#     if N < 3:
+#         # Fallback to the non-RANSAC version if not enough points are available.
+#         return find_gravity2(c2ws)
+
+#     all_positions = c2ws[:, :3, 3]
+    
+#     best_inlier_count = -1
+#     best_inliers_mask = None
+
+#     for _ in range(n_iter):
+#         # 1. Sample: Randomly select 3 points to define a plane
+#         sample_indices = np.random.choice(N, 3, replace=False)
+#         sample_positions = all_positions[sample_indices]
+
+#         # 2. Fit model: Estimate the plane normal from the sample
+#         # This is the same logic as in find_gravity2, but on the small sample
+#         center = np.mean(sample_positions, axis=0)
+#         centered_positions = sample_positions - center
+#         try:
+#             # SVD might fail if the 3 points are collinear
+#             _, _, vh = np.linalg.svd(centered_positions, full_matrices=False)
+#             g_candidate = vh[-1]  # The normal to the plane
+#         except np.linalg.LinAlgError:
+#             continue # Skip this iteration if points are collinear
+
+#         # 3. Score: Count inliers
+#         # Calculate the distance of all points to the candidate plane
+#         # The plane is defined by the normal (g_candidate) and a point on it (center)
+#         distances = np.abs(np.dot(all_positions - center, g_candidate))
+#         current_inliers_mask = distances < threshold
+#         current_inlier_count = np.sum(current_inliers_mask)
+
+#         # 4. Update best model if current one is better
+#         if current_inlier_count > best_inlier_count:
+#             best_inlier_count = current_inlier_count
+#             best_inliers_mask = current_inliers_mask
+
+#     # 5. Refit the model using all inliers found
+#     if best_inliers_mask is None:
+#         # This case is unlikely if N>=3 and n_iter>0, but as a robust fallback:
+#         # If RANSAC fails to find any good consensus set, use all poses.
+#         print("Warning: RANSAC failed to find a consensus set. Using all poses.")
+#         inlier_c2ws = c2ws
+#     else:
+#         inlier_c2ws = c2ws[best_inliers_mask]
+#         # Ensure we still have enough poses after filtering
+#         if len(inlier_c2ws) < 3:
+#              print("Warning: RANSAC resulted in too few inliers. Using all poses.")
+#              inlier_c2ws = c2ws
+
+#     # Call the original function on the clean set of inlier poses
+#     final_gravity = find_gravity2(inlier_c2ws)
+    
+#     return final_gravity
 
 
 def ritter_bounding_sphere(pts):
@@ -170,3 +264,66 @@ def auto_viewcontrol1(c2ws: np.ndarray,
         'radius': radius,
     }
     return viewcontrol
+
+
+def get_gravity_arrow(gravity, center, verbose=False, **kwargs):
+    """
+    Get the gravity arrow representation for visualisation.
+
+    Args:
+        gravity: np.ndarray, 3D vector representing the gravity direction.
+        center: np.ndarray, 3D coordinates of the center point.
+        verbose: bool, if True, print debug information.
+    Optional Args for arrow parameters:
+        - cylinder_radius
+        - cone_radius
+        - cylinder_height
+        - cone_height
+        - resolution
+        - cylinder_split
+        - cone_split
+        - arrow_color: list, RGB color for the arrow, default is purple [1.0, 0.0, 1.0].
+
+    Returns:
+        gravity_arrow: o3d.geometry.TriangleMesh, 
+            an arrow mesh representing the gravity direction.
+    """
+    import open3d as o3d
+    g_world = gravity
+
+    # Params
+    cylinder_radius = kwargs.get('cylinder_radius', 0.1)
+    cone_radius = kwargs.get('cone_radius', 0.2)
+    cylinder_height = kwargs.get('cylinder_height', 2.0)
+    cone_height = kwargs.get('cone_height', 0.5)
+    resolution = kwargs.get('resolution', 20)
+    cylinder_split = kwargs.get('cylinder_split', 4)
+    cone_split = kwargs.get('cone_split', 1)
+    arrow_color = kwargs.get('arrow_color', [1.0, 0.0, 1.0])  # default purple
+
+    gravity_arrow = o3d.geometry.TriangleMesh.create_arrow(
+        cylinder_radius=cylinder_radius,
+        cone_radius=cone_radius,
+        cylinder_height=cylinder_height,
+        cone_height=cone_height,
+        resolution=resolution,
+        cylinder_split=cylinder_split,
+        cone_split=cone_split,
+    )
+    gravity_arrow.paint_uniform_color(arrow_color)
+    z_axis = np.array([0.0, 0.0, 1.0])
+    if np.allclose(z_axis, -g_world):           # 180-deg flip: pick X as rotation axis
+        R = o3d.geometry.get_rotation_matrix_from_axis_angle(
+            np.pi * np.array([1.0, 0.0, 0.0]))
+        if verbose:
+            print("180-deg flip detected, using X-axis for rotation")
+    else:
+        axis = np.cross(z_axis, g_world)
+        axis /= np.linalg.norm(axis)
+        angle = np.arccos(np.clip(np.dot(z_axis, g_world), -1.0, 1.0))
+        R = o3d.geometry.get_rotation_matrix_from_axis_angle(angle * axis)
+    if verbose:
+        print(f"Gravity vector: {g_world}, Center of cameras: {center}")
+    gravity_arrow.translate(center)
+    gravity_arrow.rotate(R, center=center)
+    return gravity_arrow

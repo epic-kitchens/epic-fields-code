@@ -4,8 +4,10 @@ from argparse import ArgumentParser
 import json
 
 from tools.common_functions import get_c2w, get_frustum
-# from utils.geometry import bounding_sphere, find_gravity1, auto_viewcontrol1
-from utils.geometry import auto_viewcontrol1
+from utils.geometry import (
+    auto_viewcontrol1, 
+    find_gravity1, find_gravity2, # find_gravity2_ransac,
+    get_gravity_arrow)
 
 """ Visualize poses and point-cloud stored in json file."""
 
@@ -71,30 +73,17 @@ def main():
     """ Gravity """
     if args.show_gravity:
         g_world = viewcontrol['gravity']
-        gravity_arrow = o3d.geometry.TriangleMesh.create_arrow(
-            cylinder_radius=0.1,
-            cone_radius=0.2,
-            cylinder_height=2.0,
-            cone_height=0.5, 
-            resolution=20,
-            cylinder_split=4,
-            cone_split=1,
-        )
-        gravity_arrow.paint_uniform_color([1.0, 0.0, 1.0])  # purple color
-        z_axis = np.array([0.0, 0.0, 1.0])
-        if np.allclose(z_axis, -g_world):           # 180-deg flip: pick X as rotation axis
-            R = o3d.geometry.get_rotation_matrix_from_axis_angle(np.pi * np.array([1.0, 0.0, 0.0]))
-            print("180-deg flip detected, using X-axis for rotation")
-        else:
-            axis = np.cross(z_axis, g_world)
-            axis /= np.linalg.norm(axis)
-            angle = np.arccos(np.clip(np.dot(z_axis, g_world), -1.0, 1.0))
-            R = o3d.geometry.get_rotation_matrix_from_axis_angle(angle * axis)
         center = viewcontrol['center']
-        print(f"Gravity vector: {g_world}, Center of cameras: {center}")
-        gravity_arrow.translate(center)
-        gravity_arrow.rotate(R, center=center)
+        gravity_arrow = get_gravity_arrow(g_world, center)
         vis.add_geometry(gravity_arrow, reset_bounding_box=True)
+
+        gravity2 = find_gravity2(c2ws)
+        gravity_arrow2 = get_gravity_arrow(gravity2, center, arrow_color=[0.0, 1.0, 0.0])
+        vis.add_geometry(gravity_arrow2, reset_bounding_box=True)
+
+        # gravity2ransac = find_gravity2_ransac(c2ws)
+        # gravity_arrow2ransac = get_gravity_arrow(gravity2ransac, center, arrow_color=[0.0, 0.0, 1.0])
+        # vis.add_geometry(gravity_arrow2ransac, reset_bounding_box=True)
 
     """ Bounding Sphere of Cameras """
     if args.show_bounding_sphere:
